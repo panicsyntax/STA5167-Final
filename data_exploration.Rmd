@@ -12,9 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 # Reading in the dataset
 
 ```{r readDataset}
-path = "C:/Users/bri4e/OneDrive/FSU/Spring_2023/sta5167/final/STA5167-Final/heart_disease_data.csv"
+path = "C:/Users/bri4e/OneDrive/FSU/Spring_2023/sta5167/final/STA5167-Final/heart.csv"
 heart <- read.csv(path)
 knitr::kable(head(heart))
+heart
 ```
 
 # Exploring the Relationship between Charges and the Possible Predictors
