@@ -15,8 +15,19 @@ knitr::opts_chunk$set(echo = TRUE)
 path = "C:/Users/bri4e/OneDrive/FSU/Spring_2023/sta5167/final/STA5167-Final/heart.csv"
 heart <- read.csv(path)
 knitr::kable(head(heart))
-heart
+heart$sex <- as.factor(heart$sex)
 ```
+
+```{r modelSex}
+fit1 <- lm(heart$chol~heart$cp)
+summary(fit1)
+
+heart$cp <- as.factor(heart$cp)
+
+fit2 <- lm(heart$chol~heart$cp)
+summary(fit2)
+```
+
 
 # Exploring the Relationship between Charges and the Possible Predictors
 
