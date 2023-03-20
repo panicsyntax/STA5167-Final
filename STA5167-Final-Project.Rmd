@@ -1,0 +1,122 @@
+---
+title: "STA 5167 Final Project"
+author: "Brianna Alston and Lucas Nolting"
+date: "2023-03-20"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(readxl)
+STA_5167_Heart_Disease_Data <- read_excel("C:/Users/Lucas Nolting/Downloads/STA 5167 Heart Disease Data.xlsx")
+
+```
+
+```{r}
+
+library(caTools)
+library(ROCR) 
+
+```
+
+```{r}
+sex      <- as.factor(STA_5167_Heart_Disease_Data$sex)
+exang    <- as.factor(STA_5167_Heart_Disease_Data$exang)
+fbs      <- as.factor(STA_5167_Heart_Disease_Data$fbs)
+target   <- as.factor(STA_5167_Heart_Disease_Data$target)
+ca       <- STA_5167_Heart_Disease_Data$ca
+age      <- STA_5167_Heart_Disease_Data$age
+trestbps <- STA_5167_Heart_Disease_Data$trestbps
+oldpeak  <- STA_5167_Heart_Disease_Data$oldpeak
+thalach  <- STA_5167_Heart_Disease_Data$thalach
+chol     <- STA_5167_Heart_Disease_Data$chol
+
+variables <- data.frame(age, sex, trestbps, thalach, exang,
+                      oldpeak, fbs, ca, chol, target)
+
+
+```
+
+
+
+```{r}
+
+# Splitting dataset
+set.seed(12345)
+split <- sample.split(variables, SplitRatio = 0.8)
+split
+training_data <- subset(variables, split == "TRUE")
+test_data <- subset(variables, split == "FALSE")
+
+```
+
+
+
+```{r}
+
+summary(glm(target~age+sex+trestbps+thalach+exang+oldpeak+fbs+ca+chol, data = training_data, family=binomial))
+
+
+```
+
+
+
+```{r}
+
+logistic_model<-glm(target~sex+trestbps+thalach+exang+oldpeak+ca+chol, data = training_data, family="binomial")
+
+summary(logistic_model)
+
+```
+
+```{r}
+# Predict test data based on model
+predict_reg <- predict(logistic_model, 
+                       test_data, type = "response")
+
+# Changing probabilities
+predict_reg <- ifelse(predict_reg >0.5, 1, 0)
+
+```
+
+
+```{r}
+
+# Evaluating model accuracy
+# using confusion matrix
+table(test_data$target, predict_reg)
+   
+missing_classerr <- mean(predict_reg != test_data$target)
+print(paste('Accuracy =', 1 - missing_classerr))
+
+```
+
+```{r}
+
+# ROC-AUC Curve
+ROCPred <- prediction(predict_reg, test_data$target) 
+ROCPer <- performance(ROCPred, measure = "tpr", 
+                             x.measure = "fpr")
+   
+auc <- performance(ROCPred, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
+   
+# Plotting curve
+plot(ROCPer)
+abline(a = 0, b = 1)
+auc <- round(auc, 4)
+legend(.6, .4, auc, title = "AUC", cex = 1)
+
+```
+
+
+
+
+
+
+
