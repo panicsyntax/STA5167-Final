@@ -1,0 +1,80 @@
+---
+title: "Initial Data Exploration"
+author: "Brianna Alston & Lucas Nolting"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Reading in the dataset
+
+```{r readDataset}
+path = "C:/Users/bri4e/OneDrive/FSU/Spring_2023/sta5167/final/STA5167-Final/insurance.csv"
+cost <- read.csv(path)
+knitr::kable(head(cost))
+```
+
+# Exploring the Relationship between Charges and the Possible Predictors
+
+Initially creating basic plots to find possible relationships
+
+## Age and Charges
+
+```{r scatterAge,message=FALSE,warning=FALSE}
+library(dplyr)
+library(ggplot2)
+
+plot(cost$age,cost$charges)
+```
+
+The cost appears to increase as age increases. There also appears to be three groups of cost, possibly related to insurance coverage which we do not have an indicator variable for.
+
+## BMI and Charges
+
+```{r scatterBMI}
+plot(cost$bmi,cost$charges)
+```
+Less obvious relationship here but some indication of an increase in charges as BMI increases.
+
+## Sex and Charges
+
+```{r boxplotSex}
+sex <- ggplot(cost,aes(x=sex,y=charges))
+sex + geom_boxplot()
+```
+
+Based on the boxplot, there does not appear to be a statistical difference between charges for males and females, although the IQR for males is greater than the IQR for females.
+
+## Children and Charges
+
+```{r boxplotChildren}
+cost$children <- as.factor(cost$children)
+child <- ggplot(cost,aes(x=children,y=charges))
+child + geom_boxplot()
+```
+
+There does not appear to be evidence of a difference in means for the number of children.
+
+## Smoker and Charges
+
+```{r boxplotSmoker}
+smoker <-  ggplot(cost,aes(x=smoker,y=charges))
+smoker + geom_boxplot()
+```
+
+The average charges for smokers appear to be higher than the charges for nonsmokers, however the boxplots overlap, suggesting that the difference may not be statistically significant.
+
+## Region and Charges
+
+```{r boxplotRegion}
+region <-  ggplot(cost,aes(x=region,y=charges))
+region + geom_boxplot()
+```
+
+There does not appear to be a difference in charges across the regions.
+
+
+
