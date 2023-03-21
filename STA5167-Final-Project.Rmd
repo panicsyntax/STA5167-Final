@@ -9,26 +9,41 @@ output: word_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+# Reading in the Dataset
 
+```{r readData, echo=FALSE}
 library(readxl)
-STA_5167_Heart_Disease_Data <- read_excel("C:/Users/Lucas Nolting/Downloads/STA 5167 Heart Disease Data.xlsx")
-
+#STA_5167_Heart_Disease_Data <- read_excel("C:/Users/Lucas Nolting/Downloads/STA 5167 Heart Disease Data.xlsx")
+STA_5167_Heart_Disease_Data <- read.csv("C:/Users/bri4e/OneDrive/FSU/Spring_2023/sta5167/final/STA5167-Final/heart.csv")
+knitr::kable(head(STA_5167_Heart_Disease_Data))
 ```
 
-```{r}
+## Selecting Variables for the Model
 
-library(caTools)
-library(ROCR) 
+### Categorical Variables
 
-```
+- sex (1=male; 0=female)
+- cp: chest pain type
+- exang: exercise induced angina (1=yes; 0=no)
+- fbs: fasting blood sugar >120 mg/dl (1=true; 0=false)
+- ca: number of major vessels colored by flourosopy (0-3) 
+- target: heart disease (1=yes; 0=no)
 
-```{r}
+### Continuous Variables
+
+- age in years
+- trestbps: resting blood pressure
+- oldpeak: ST depression 
+- thalach: maximum heart rate
+- chol: cholesterol
+
+
+```{r variableSelection, echo=FALSE}
 sex      <- as.factor(STA_5167_Heart_Disease_Data$sex)
 exang    <- as.factor(STA_5167_Heart_Disease_Data$exang)
 fbs      <- as.factor(STA_5167_Heart_Disease_Data$fbs)
 target   <- as.factor(STA_5167_Heart_Disease_Data$target)
-ca       <- STA_5167_Heart_Disease_Data$ca
+ca       <- as.factor(STA_5167_Heart_Disease_Data$ca)
 age      <- STA_5167_Heart_Disease_Data$age
 trestbps <- STA_5167_Heart_Disease_Data$trestbps
 oldpeak  <- STA_5167_Heart_Disease_Data$oldpeak
@@ -37,66 +52,70 @@ chol     <- STA_5167_Heart_Disease_Data$chol
 
 variables <- data.frame(age, sex, trestbps, thalach, exang,
                       oldpeak, fbs, ca, chol, target)
-
-
 ```
 
+# Model Selection
 
+## Fitting the full model
 
-```{r}
+```{r fitModel}
+summary(glm(target~age+sex+trestbps+thalach+exang+oldpeak+fbs+ca+chol, data = variables, family=binomial))
+```
+### Loading Packages
 
-# Splitting dataset
+```{r loadPackages, message=FALSE,warning=FALSE}
+# Packages for ROC
+library(caTools)
+library(ROCR) 
+```
+
+## Evaluating Model Performance
+
+We will split the data into training and testing data sets, and evaluate the percentage of correct classifications.
+
+### Creating the Training and Testing Data 
+
+```{r splitData}
 set.seed(12345)
 split <- sample.split(variables, SplitRatio = 0.8)
-split
 training_data <- subset(variables, split == "TRUE")
 test_data <- subset(variables, split == "FALSE")
-
 ```
 
+### Fitting the model on the training data
 
-
-```{r}
-
-summary(glm(target~age+sex+trestbps+thalach+exang+oldpeak+fbs+ca+chol, data = training_data, family=binomial))
-
-
-```
-
-
-
-```{r}
-
+```{r fitTraining,results='hide'}
 logistic_model<-glm(target~sex+trestbps+thalach+exang+oldpeak+ca+chol, data = training_data, family="binomial")
-
 summary(logistic_model)
-
 ```
+### Predicting the likelihood of heart disease on the testing data using a cutoff value of .5
 
-```{r}
+```{r predictTest}
 # Predict test data based on model
 predict_reg <- predict(logistic_model, 
                        test_data, type = "response")
 
-# Changing probabilities
+# Changing probabilities at cutoff value
 predict_reg <- ifelse(predict_reg >0.5, 1, 0)
-
 ```
 
+### Creating a Confusion Matrix
 
-```{r}
-
-# Evaluating model accuracy
+```{r confusionMatrix,echo=FALSE}
 # using confusion matrix
-table(test_data$target, predict_reg)
-   
+knitr::kable(table(test_data$target, predict_reg))
+```
+
+### Evaluating Model Accuracy
+
+```{r modelAccuracy,echo=FALSE}
 missing_classerr <- mean(predict_reg != test_data$target)
 print(paste('Accuracy =', 1 - missing_classerr))
-
 ```
 
-```{r}
+### Plotting the ROC Curve and Calculating the AUC
 
+```{r plotROC}
 # ROC-AUC Curve
 ROCPred <- prediction(predict_reg, test_data$target) 
 ROCPer <- performance(ROCPred, measure = "tpr", 
@@ -104,14 +123,12 @@ ROCPer <- performance(ROCPred, measure = "tpr",
    
 auc <- performance(ROCPred, measure = "auc")
 auc <- auc@y.values[[1]]
-auc
-   
+
 # Plotting curve
-plot(ROCPer)
+plot(ROCPer,main="ROC Curve")
 abline(a = 0, b = 1)
 auc <- round(auc, 4)
 legend(.6, .4, auc, title = "AUC", cex = 1)
-
 ```
 
 
